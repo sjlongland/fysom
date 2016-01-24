@@ -358,7 +358,9 @@ class Fysom(object):
         fnname = 'onbefore' + e.event
         if HAVE_SIGNALSLOT:
             signame = fnname + '_sig'
-            getattr(self, signame).emit(event=e)
+            res = getattr(self, signame).emit(event=e)
+            if res is not None:
+                return res
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 
@@ -366,10 +368,12 @@ class Fysom(object):
         '''
             Checks to see if the callback is registered for, after this event is completed.
         '''
+        if HAVE_SIGNALSLOT:
+            signame = 'onafter' + e.event + '_sig'
+            res = getattr(self, signame).emit(event=e)
+            if res is not None:
+                return res
         for fnname in ['onafter' + e.event, 'on' + e.event]:
-            if HAVE_SIGNALSLOT:
-                signame = fnname + '_sig'
-                getattr(self, signame).emit(event=e)
             if hasattr(self, fnname):
                 return getattr(self, fnname)(e)
 
@@ -382,7 +386,9 @@ class Fysom(object):
         fnname = 'onleave' + e.src
         if HAVE_SIGNALSLOT:
             signame = fnname + '_sig'
-            getattr(self, signame).emit(event=e)
+            res = getattr(self, signame).emit(event=e)
+            if res is not None:
+                return res
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 
@@ -392,7 +398,9 @@ class Fysom(object):
         '''
         if HAVE_SIGNALSLOT:
             signame = 'onenter' + e.dst + '_sig'
-            getattr(self, signame).emit(event=e)
+            res = getattr(self, signame).emit(event=e)
+            if res is not None:
+                return res
         for fnname in ['onenter' + e.dst, 'on' + e.dst]:
             if hasattr(self, fnname):
                 return getattr(self, fnname)(e)
@@ -405,7 +413,9 @@ class Fysom(object):
         fnname = 'onreenter' + e.dst
         if HAVE_SIGNALSLOT:
             signame = fnname + '_sig'
-            getattr(self, signame).emit(event=e)
+            res = getattr(self, signame).emit(event=e)
+            if res is not None:
+                return res
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 
@@ -416,7 +426,9 @@ class Fysom(object):
         fnname = 'onchangestate'
         if HAVE_SIGNALSLOT:
             signame = fnname + '_sig'
-            getattr(self, signame).emit(event=e)
+            res = getattr(self, signame).emit(event=e)
+            if res is not None:
+                return res
 
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)

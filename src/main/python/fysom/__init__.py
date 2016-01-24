@@ -32,6 +32,12 @@ import weakref
 import types
 import sys
 
+try:
+    import signalslot
+    HAVE_SIGNALSLOT = True
+except ImportError: # pragma: no cover
+    HAVE_SIGNALSLOT = False
+
 __author__ = 'Mansour Behabadi'
 __copyright__ = 'Copyright 2011, Mansour Behabadi and Jake Gordon'
 __credits__ = ['Mansour Behabadi', 'Jake Gordon']
@@ -203,6 +209,29 @@ class Fysom(object):
         tmap = {}
         self._map = tmap
 
+        if HAVE_SIGNALSLOT:
+            state_names = set()
+
+            # Add the initial and final states.
+            if bool(init) and bool(init.get('state')):
+                state_names.add(init['state'])
+            if bool(self._final):
+                state_names.add(self._final)
+
+            # Define how to make a signal.
+            def _make_signal(name, *aliases):
+                sig = signalslot.Signal(name=name)
+                setattr(self, name, sig)
+                for alias in aliases:
+                    setattr(self, alias, sig)
+
+        else: # pragma: no cover
+            # Define how to do nothing.
+            def _make_signal(name, *aliases):
+                pass
+
+        _make_signal('onchangestate_sig')
+
         def add(e):
             '''
                 Adds the event into the machine map.
@@ -210,12 +239,16 @@ class Fysom(object):
             if 'src' in e:
                 src = [e['src']] if self._is_base_string(
                     e['src']) else e['src']
+                if HAVE_SIGNALSLOT:
+                    state_names.update(set(src))
             else:
                 src = [WILDCARD]
             if e['name'] not in tmap:
                 tmap[e['name']] = {}
             for s in src:
                 tmap[e['name']][s] = e['dst']
+                if HAVE_SIGNALSLOT:
+                    state_names.add(e['dst'])
 
         # Consider initial state as any other state that can have transition from none to
         # initial value on occurance of startup / init event ( if specified).
@@ -224,8 +257,17 @@ class Fysom(object):
                 init['event'] = 'startup'
             add({'name': init['event'], 'src': 'none', 'dst': init['state']})
 
-        for e in events:
-            add(e)
+        map(add, events)
+        if HAVE_SIGNALSLOT:
+            # Create state signals
+            for state in state_names:
+                for action in ('enter', 'leave', 'reenter', 'change'):
+                    _make_signal('on%s%s_sig' % (action, state))
+            # Create the event signals
+            for event in tmap.keys():
+                for action in ('before', 'after'):
+                    _make_signal('on%s%s_sig' % (action, event),
+                                        'on%s_sig' % event)
 
         # For all the events as present in machine map, construct the event
         # handler.
@@ -314,6 +356,9 @@ class Fysom(object):
             Checks to see if the callback is registered before this event can be triggered.
         '''
         fnname = 'onbefore' + e.event
+        if HAVE_SIGNALSLOT:
+            signame = fnname + '_sig'
+            getattr(self, signame).emit(event=e)
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 
@@ -322,6 +367,9 @@ class Fysom(object):
             Checks to see if the callback is registered for, after this event is completed.
         '''
         for fnname in ['onafter' + e.event, 'on' + e.event]:
+            if HAVE_SIGNALSLOT:
+                signame = fnname + '_sig'
+                getattr(self, signame).emit(event=e)
             if hasattr(self, fnname):
                 return getattr(self, fnname)(e)
 
@@ -332,6 +380,9 @@ class Fysom(object):
             leave the current state.
         '''
         fnname = 'onleave' + e.src
+        if HAVE_SIGNALSLOT:
+            signame = fnname + '_sig'
+            getattr(self, signame).emit(event=e)
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 
@@ -339,6 +390,9 @@ class Fysom(object):
         '''
             Executes the callback for onenter_state_ or on_state_.
         '''
+        if HAVE_SIGNALSLOT:
+            signame = 'onenter' + e.dst + '_sig'
+            getattr(self, signame).emit(event=e)
         for fnname in ['onenter' + e.dst, 'on' + e.dst]:
             if hasattr(self, fnname):
                 return getattr(self, fnname)(e)
@@ -349,6 +403,9 @@ class Fysom(object):
             This allows callbacks following reflexive transitions (i.e. where src == dst)
         '''
         fnname = 'onreenter' + e.dst
+        if HAVE_SIGNALSLOT:
+            signame = fnname + '_sig'
+            getattr(self, signame).emit(event=e)
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 
@@ -357,6 +414,10 @@ class Fysom(object):
             A general change state callback. This gets triggered at the time of state transition.
         '''
         fnname = 'onchangestate'
+        if HAVE_SIGNALSLOT:
+            signame = fnname + '_sig'
+            getattr(self, signame).emit(event=e)
+
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
 

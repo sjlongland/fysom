@@ -257,3 +257,44 @@ class FysomSignalTests(unittest.TestCase):
         self.assertEqual(self.current_event.named_attribute, 'test')
         self.assertEqual(self.current_event.args[0], 'positional')
         self.assertTrue(self.current_event.fsm is fsm)
+
+    def test_before_event_can_cancel(self):
+        def on_before(event, **kwargs):
+            self.current_event = event
+            return False
+        fsm = Fysom({
+            'initial': 'foo',
+            'events': [
+                {'name': 'footobar', 'src': 'foo', 'dst': 'bar'},
+                {'name': 'bartobaz', 'src': 'bar', 'dst': 'baz'},
+            ],
+        })
+        fsm.onbeforefootobar_sig.connect(on_before)
+
+        self.assertRaises(Canceled, fsm.footobar, id=42)
+        self.assertEqual(self.current_event.event, 'footobar')
+        self.assertEqual(self.current_event.src, 'foo')
+        self.assertEqual(self.current_event.dst, 'bar')
+        self.assertEqual(self.current_event.id, 42)
+        self.assertTrue(self.current_event.fsm is fsm)
+
+    def test_leave_state_can_abort(self):
+        def on_leave(event, **kwargs):
+            self.current_event = event
+            return False
+        fsm = Fysom({
+            'initial': 'foo',
+            'events': [
+                {'name': 'footobar', 'src': 'foo', 'dst': 'bar'},
+                {'name': 'bartobaz', 'src': 'bar', 'dst': 'baz'},
+            ],
+        })
+        fsm.onleavefoo_sig.connect(on_leave)
+
+        fsm.footobar(id=42)
+        self.assertEqual(self.current_event.event, 'footobar')
+        self.assertEqual(self.current_event.src, 'foo')
+        self.assertEqual(self.current_event.dst, 'bar')
+        self.assertEqual(self.current_event.id, 42)
+        self.assertTrue(self.current_event.fsm is fsm)
+        self.assertEqual(fsm.current, 'foo')

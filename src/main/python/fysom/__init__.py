@@ -257,7 +257,9 @@ class Fysom(object):
                 init['event'] = 'startup'
             add({'name': init['event'], 'src': 'none', 'dst': init['state']})
 
-        map(add, events)
+        for event in events:
+            add(event)
+
         if HAVE_SIGNALSLOT:
             # Create state signals
             for state in state_names:

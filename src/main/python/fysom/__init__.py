@@ -371,7 +371,7 @@ class Fysom(object):
         if HAVE_SIGNALSLOT:
             signame = 'onafter' + e.event + '_sig'
             res = getattr(self, signame).emit(event=e)
-            if res is not None:
+            if res is not None: # pragma: no cover
                 return res
         for fnname in ['onafter' + e.event, 'on' + e.event]:
             if hasattr(self, fnname):
@@ -399,7 +399,7 @@ class Fysom(object):
         if HAVE_SIGNALSLOT:
             signame = 'onenter' + e.dst + '_sig'
             res = getattr(self, signame).emit(event=e)
-            if res is not None:
+            if res is not None: # pragma: no cover
                 return res
         for fnname in ['onenter' + e.dst, 'on' + e.dst]:
             if hasattr(self, fnname):
@@ -414,7 +414,7 @@ class Fysom(object):
         if HAVE_SIGNALSLOT:
             signame = fnname + '_sig'
             res = getattr(self, signame).emit(event=e)
-            if res is not None:
+            if res is not None: # pragma: no cover
                 return res
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
@@ -427,7 +427,7 @@ class Fysom(object):
         if HAVE_SIGNALSLOT:
             signame = fnname + '_sig'
             res = getattr(self, signame).emit(event=e)
-            if res is not None:
+            if res is not None: # pragma: no cover
                 return res
 
         if hasattr(self, fnname):

@@ -29,9 +29,9 @@
 
 import unittest
 
-from fysom import Fysom, Canceled
+from fysom import Fysom, Canceled, HAVE_SIGNALSLOT
 
-
+@unittest.skipUnless(HAVE_SIGNALSLOT)
 class FysomRepeatedBeforeEventSignalTests(unittest.TestCase):
 
     def setUp(self):
@@ -57,6 +57,7 @@ class FysomRepeatedBeforeEventSignalTests(unittest.TestCase):
         self.assertEqual(self.fired, ["first", "second"])
 
 
+@unittest.skipUnless(HAVE_SIGNALSLOT)
 class FysomRepeatedAfterEventSignalTests(unittest.TestCase):
 
     def setUp(self):
@@ -82,6 +83,7 @@ class FysomRepeatedAfterEventSignalTests(unittest.TestCase):
         self.assertEqual(self.fired, ["first", "second"])
 
 
+@unittest.skipUnless(HAVE_SIGNALSLOT)
 class FysomSignalTests(unittest.TestCase):
 
     def before_foo(self, event, **kwargs):

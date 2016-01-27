@@ -9,7 +9,6 @@ python:
 install:
   - pip install pybuilder
   - pip install coveralls
-  - pip install weakrefmethod
   - pip install signalslot
   - pyb install_dependencies
 script: "pyb verify analyze"
